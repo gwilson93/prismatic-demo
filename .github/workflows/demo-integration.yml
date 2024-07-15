@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
- # Build and publish Acme CRM component
+  # Build and publish Acme CRM component
   demo-component:
     runs-on: ubuntu-latest
     steps:
@@ -36,5 +36,5 @@ jobs:
           PATH_TO_YML: integrations/ServiceTitan.yml
           PRISMATIC_URL: https://app.prismatic.io
           PRISM_REFRESH_TOKEN: CScZ2dqGn8ryNR3rCAAx4XYIIOxQjZC4llsSTMjeqlNI-
-          INTEGRATION_ID:SW50ZWdyYXRpb246NGRiNzMyMDEtYzVhMi00NThkLWFlYjAtYmVlODk3OWE1YjZj/
+          INTEGRATION_ID: SW50ZWdyYXRpb246NGRiNzMyMDEtYzVhMi00NThkLWFlYjAtYmVlODk3OWE1YjZj/
           MAKE_AVAILABLE_IN_MARKETPLACE: true
