@@ -28,6 +28,7 @@ jobs:
   # Publish Demo integration
   demo-integration:
     runs-on: ubuntu-latest
+    needs: demo-component
     steps:
       - uses: actions/checkout@v4
       - name: Prismatic Integration Publisher
