@@ -23,14 +23,14 @@ jobs:
         with:
           COMPONENT_PATH: components/component
           PRISMATIC_URL: https://app.prismatic.io
-          PRISM_REFRESH_TOKEN: ScZ2dqGn8ryNR3rCAAx4XYIIOxQjZC4llsSTMjeqlNI-
+          PRISM_REFRESH_TOKEN: CScZ2dqGn8ryNR3rCAAx4XYIIOxQjZC4llsSTMjeqlNI-
 
   # Publish Demo integration
   demo-integration:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Publish Integration Component
+      - name: Publish Integration
         uses: prismatic-io/integration-publisher@v1.1
         with:
           PATH_TO_YML: integrations/ServiceTitan.yml
