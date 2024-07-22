@@ -1,9 +1,9 @@
 
-    import * as example from "./example";
+    import * as fieldMap from "./fieldMap";
 
 
   export default {
   
-    ...example,
+    ...fieldMap,
   
   }

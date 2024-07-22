@@ -1,5 +1,5 @@
 {
-  "name": "PermitFlow",
+  "name": "Endpoint",
   "version": "0.0.1",
   "main": "index.js",
   "private": true,
@@ -16,14 +16,13 @@
     ]
   },
   "dependencies": {
-    "@prismatic-io/spectral": "latest",
+    "@prismatic-io/spectral": "8.1.7",
     "@jsonforms/core": "3.0.0",
     "axios": "1.5.0",
     "uuid": "9.0.1"
   },
   "devDependencies": {
     "@prismatic-io/eslint-config-spectral": "2.0.1",
-    "@types/uuid": "latest",
     "@types/jest": "26.0.24",
     "copy-webpack-plugin": "11.0.0",
     "jest": "27.0.6",

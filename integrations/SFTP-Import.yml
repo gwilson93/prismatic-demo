@@ -1,0 +1,930 @@
+category: File Import
+configPages:
+  - elements:
+      - type: htmlElement
+        value: <h4>SFTP Authentication</h4>
+      - type: configVar
+        value: SFTP Connection
+    name: Authentication
+    tagline: ''
+  - elements:
+      - type: htmlElement
+        value: <h4>File Import Settings</h4>
+      - type: configVar
+        value: Import Directory Path
+      - type: configVar
+        value: File Import Type
+      - type: configVar
+        value: Import Frequency
+      - type: configVar
+        value: Archive Imported Files
+    name: Import Settings
+    tagline: ''
+    userLevelConfigured: false
+  - elements:
+      - type: htmlElement
+        value: <h4>File to Destination Field Mappings</h4>
+      - type: configVar
+        value: SFTP Field Mapping
+    name: Field Mappings
+    tagline: ''
+    userLevelConfigured: false
+defaultInstanceProfile: Default Instance Profile
+definitionVersion: 7
+description: 'Import CSV, Excel, or JSON files to Acme Inc'
+documentation: ''
+endpointType: flow_specific
+flows:
+  - description: ''
+    endpointSecurityType: customer_optional
+    isSynchronous: false
+    name: Get File Names from SFTP
+    steps:
+      - action:
+          key: schedule
+          component:
+            isPublic: true
+            key: schedule-triggers
+            version: LATEST
+        description: ''
+        inputs: {}
+        isTrigger: true
+        name: Recurring Sync Trigger
+        schedule:
+          meta:
+            scheduleType: custom
+            timeZone: ''
+          type: configVar
+          value: Import Frequency
+      - action:
+          key: listDirectory
+          component:
+            isPublic: true
+            key: sftp
+            version: LATEST
+        description: ''
+        inputs:
+          connection:
+            type: configVar
+            value: SFTP Connection
+          debug:
+            type: value
+            value: 'false'
+          path:
+            type: configVar
+            value: Import Directory Path
+          pattern:
+            type: template
+            value: '*.{{#File Import Type}}'
+        name: List Files in Directory
+      - action:
+          key: loopOverItems
+          component:
+            isPublic: true
+            key: loop
+            version: LATEST
+        description: ''
+        inputs:
+          items:
+            type: reference
+            value: listFilesInDirectory.results
+        name: Loop Over File(s)
+        steps:
+          - action:
+              key: createObject
+              component:
+                isPublic: true
+                key: collection-tools
+                version: LATEST
+            description: ''
+            inputs:
+              keyValueInput:
+                type: complex
+                value:
+                  - name:
+                      type: value
+                      value: filename
+                    type: reference
+                    value: loopOverFileS.currentItem
+            name: Create FileName Object
+          - action:
+              key: httpPost
+              component:
+                isPublic: true
+                key: http
+                version: LATEST
+            description: ''
+            inputs:
+              connection:
+                type: configVar
+                value: ''
+              data:
+                type: reference
+                value: createFilenameObject.results
+              debugRequest:
+                type: value
+                value: 'false'
+              headers:
+                type: complex
+                value: []
+              ignoreSslErrors:
+                type: value
+                value: 'false'
+              includeFullResponse:
+                type: value
+                value: 'false'
+              maxRetries:
+                type: value
+                value: '0'
+              queryParams:
+                type: complex
+                value: []
+              responseType:
+                type: value
+                value: json
+              retryDelayMS:
+                type: value
+                value: '0'
+              retryOnAllErrors:
+                type: value
+                value: 'false'
+              timeout:
+                type: value
+                value: ''
+              url:
+                type: value
+                value: >-
+                  https://hooks.prismatic.io/trigger/SW5zdGFuY2VGbG93Q29uZmlnOjdiYzZlY2JhLTkyNGQtNGViZS1hYWQzLTI1MTg1ZGRhNmE3NA==
+              useExponentialBackoff:
+                type: value
+                value: 'false'
+            name: Send File to Parse and Import Flow
+  - description: ''
+    endpointSecurityType: customer_optional
+    isSynchronous: false
+    name: Parse and Import File from SFTP
+    steps:
+      - action:
+          key: webhook
+          component:
+            isPublic: true
+            key: webhook-triggers
+            version: LATEST
+        description: ''
+        inputs:
+          body:
+            type: value
+            value: ''
+          contentType:
+            type: value
+            value: ''
+          headers:
+            type: complex
+            value: []
+          statusCode:
+            type: value
+            value: ''
+        isTrigger: true
+        name: Parse and Import File Trigger
+      - action:
+          key: readFile
+          component:
+            isPublic: true
+            key: sftp
+            version: LATEST
+        description: ''
+        errorConfig:
+          delaySeconds: 10
+          errorHandlerType: fail
+          ignoreFinalError: false
+          maxAttempts: 1
+          usesExponentialBackoff: false
+        inputs:
+          connection:
+            type: configVar
+            value: SFTP Connection
+          debug:
+            type: value
+            value: 'false'
+          inputPath:
+            type: template
+            value: >-
+              {{#Import Directory
+              Path}}/{{$parseAndImportFileTrigger.results.body.data.filename}}
+          returnBuffer:
+            type: value
+            value: 'false'
+        name: Read File
+      - action:
+          key: branchOnExpression
+          component:
+            isPublic: true
+            key: branch
+            version: LATEST
+        branches:
+          - name: CSV
+            steps:
+              - action:
+                  key: parse
+                  component:
+                    isPublic: true
+                    key: csv
+                    version: LATEST
+                description: ''
+                errorConfig:
+                  delaySeconds: null
+                  errorHandlerType: ignore
+                  ignoreFinalError: null
+                  maxAttempts: null
+                  usesExponentialBackoff: null
+                inputs:
+                  csv:
+                    type: reference
+                    value: readFile.results
+                  delimiter:
+                    type: value
+                    value: ','
+                name: Parse
+          - name: Excel
+            steps:
+              - action:
+                  key: parseBuffer
+                  component:
+                    isPublic: true
+                    key: ms-excel
+                    version: LATEST
+                description: ''
+                errorConfig:
+                  delaySeconds: null
+                  errorHandlerType: ignore
+                  ignoreFinalError: null
+                  maxAttempts: null
+                  usesExponentialBackoff: null
+                inputs:
+                  file:
+                    type: reference
+                    value: readFile.results
+                name: Read From Buffer
+          - name: JSON
+            steps: []
+          - name: XML
+            steps:
+              - action:
+                  key: deserializeFromXml
+                  component:
+                    isPublic: true
+                    key: change-data-format
+                    version: LATEST
+                description: ''
+                inputs:
+                  data:
+                    type: reference
+                    value: readFile.results
+                  numbersAsStrings:
+                    type: value
+                    value: 'false'
+                name: Deserialize XML
+          - name: Else
+            steps:
+              - action:
+                  key: writeLog
+                  component:
+                    isPublic: true
+                    key: log
+                    version: LATEST
+                description: ''
+                inputs:
+                  level:
+                    type: value
+                    value: error
+                  message:
+                    type: value
+                    value: Error - Unsupported File Type
+                name: Write Log Message
+              - action:
+                  key: stopExecution
+                  component:
+                    isPublic: true
+                    key: stop-execution
+                    version: LATEST
+                description: ''
+                inputs:
+                  contentType:
+                    type: value
+                    value: application/json
+                  headers:
+                    type: complex
+                    value: []
+                  jsonBody:
+                    type: value
+                    value: ''
+                  statusCode:
+                    type: value
+                    value: '200'
+                name: Stop Execution
+        description: ''
+        inputs:
+          conditions:
+            type: complex
+            value:
+              - name: CSV
+                type: complex
+                value:
+                  - and
+                  - - equal
+                    - name: ''
+                      type: configVar
+                      value: File Import Type
+                    - name: ''
+                      type: value
+                      value: csv
+              - name: Excel
+                type: complex
+                value:
+                  - and
+                  - - equal
+                    - name: ''
+                      type: configVar
+                      value: File Import Type
+                    - name: ''
+                      type: value
+                      value: xlsx
+              - name: JSON
+                type: complex
+                value:
+                  - and
+                  - - equal
+                    - name: ''
+                      type: configVar
+                      value: File Import Type
+                    - name: ''
+                      type: value
+                      value: json
+              - name: XML
+                type: complex
+                value:
+                  - and
+                  - - equal
+                    - name: ''
+                      type: configVar
+                      value: File Import Type
+                    - name: ''
+                      type: value
+                      value: xml
+        name: Branch on File Type
+      - action:
+          key: branchOnExpression
+          component:
+            isPublic: true
+            key: branch
+            version: LATEST
+        branches:
+          - name: Parsing Error Occurred
+            steps:
+              - action:
+                  key: moveFile
+                  component:
+                    isPublic: true
+                    key: sftp
+                    version: LATEST
+                description: ''
+                inputs:
+                  connection:
+                    type: configVar
+                    value: SFTP Connection
+                  debug:
+                    type: value
+                    value: 'false'
+                  destinationPath:
+                    type: template
+                    value: >-
+                      {{#Import Directory
+                      Path}}/../errors/{{$parseAndImportFileTrigger.results.body.data.filename}}
+                  sourcePath:
+                    type: template
+                    value: >-
+                      {{#Import Directory
+                      Path}}/{{$parseAndImportFileTrigger.results.body.data.filename}}
+                name: Move File to Errors Directory
+          - name: Else
+            steps:
+              - action:
+                  key: selectExecutedStepResult
+                  component:
+                    isPublic: true
+                    key: branch
+                    version: LATEST
+                description: ''
+                inputs:
+                  stepResults:
+                    type: complex
+                    value:
+                      - type: reference
+                        value: parse.results.data
+                      - type: reference
+                        value: readFromBuffer.results
+                      - type: reference
+                        value: deserializeXml.results
+                      - type: reference
+                        value: readFile.results
+                name: Retrieve File Data
+              - action:
+                  key: loopOverItems
+                  component:
+                    isPublic: true
+                    key: loop
+                    version: LATEST
+                description: ''
+                inputs:
+                  items:
+                    type: reference
+                    value: retrieveFileData.results
+                name: Loop Over Rows
+                steps:
+                  - action:
+                      key: runCode
+                      component:
+                        isPublic: true
+                        key: code
+                        version: LATEST
+                    description: Example CSV Field Mapper
+                    inputs:
+                      code:
+                        type: value
+                        value: >
+                          /*
+                            Access config variables by name through the configVars object. e.g.
+                              const apiEndpoint = `${configVars["App Base URL"]}/api`;
+
+                            Access previous steps' results through the stepResults object. Trigger
+                            and step names are camelCased. If the step "Get Data from API" returned
+                            {"foo": "bar", "baz": 123}, you could destructure that data with:
+                              const { foo, baz } = stepResults.getDataFromApi.results;
+
+                            You can return string, number or complex object data. e.g.
+                              return { data: { foo: "Hello", bar: 123.45, baz: true } };
+                          */
+
+
+                          module.exports = async ({ logger, configVars },
+                          stepResults) => {
+                            const sftpRecord = stepResults.loopOverRows.currentItem;
+                            const { mapping } = configVars["SFTP Field Mapping"];
+
+                            // Optional default mappings
+                            const initialMappings = {};
+                            
+                            const results = mapping.reduce(
+                              (mappedFields, { source, destination }) => ({
+                                [destination]: sftpRecord[source],
+                                ...mappedFields,
+                              }),
+                              initialMappings,
+                            );
+                            return { data: results };
+                          };
+                    name: Map SFTP Fields to Destination
+                  - action:
+                      key: actions
+                      component:
+                        isPublic: true
+                        key: result-placeholder
+                        version: LATEST
+                    description: Replace with file handling logic
+                    inputs:
+                      code:
+                        type: value
+                        value: '{}'
+                    name: Mock Result
+                  - action:
+                      key: stopExecution
+                      component:
+                        isPublic: true
+                        key: stop-execution
+                        version: LATEST
+                    description: ''
+                    inputs:
+                      contentType:
+                        type: value
+                        value: application/json
+                      headers:
+                        type: complex
+                        value: []
+                      jsonBody:
+                        type: value
+                        value: ''
+                      statusCode:
+                        type: value
+                        value: '200'
+                    name: Stop Execution 2
+                  - action:
+                      key: branchOnExpression
+                      component:
+                        isPublic: true
+                        key: branch
+                        version: LATEST
+                    branches:
+                      - name: Archive File?
+                        steps:
+                          - action:
+                              key: moveFile
+                              component:
+                                isPublic: true
+                                key: sftp
+                                version: LATEST
+                            description: ''
+                            inputs:
+                              connection:
+                                type: configVar
+                                value: SFTP Connection
+                              debug:
+                                type: value
+                                value: 'false'
+                              destinationPath:
+                                type: template
+                                value: >-
+                                  {{#Import Directory
+                                  Path}}/../archive/{{$parseAndImportFileTrigger.results.body.data.filename}}
+                              sourcePath:
+                                type: template
+                                value: >-
+                                  {{#Import Directory
+                                  Path}}/{{$parseAndImportFileTrigger.results.body.data.filename}}
+                            name: Move File to Archive Folder
+                      - name: Else
+                        steps:
+                          - action:
+                              key: deleteFile
+                              component:
+                                isPublic: true
+                                key: sftp
+                                version: LATEST
+                            description: ''
+                            inputs:
+                              connection:
+                                type: configVar
+                                value: SFTP Connection
+                              debug:
+                                type: value
+                                value: 'false'
+                              path:
+                                type: template
+                                value: >-
+                                  {{#Import Directory
+                                  Path}}/{{$parseAndImportFileTrigger.results.body.data.filename}}
+                            name: Delete File
+                    description: ''
+                    inputs:
+                      conditions:
+                        type: complex
+                        value:
+                          - name: Archive File?
+                            type: complex
+                            value:
+                              - and
+                              - - isTrue
+                                - name: ''
+                                  type: configVar
+                                  value: Archive Imported Files
+                    name: Should Archive File?
+        description: ''
+        inputs:
+          conditions:
+            type: complex
+            value:
+              - name: Parsing Error Occurred
+                type: complex
+                value:
+                  - or
+                  - - isNotEmpty
+                    - name: ''
+                      type: reference
+                      value: parse.results.errors
+                    - name: ''
+                      type: value
+                      value: ''
+                  - - exists
+                    - name: ''
+                      type: reference
+                      value: readFromBuffer.results.error
+                  - - exists
+                    - name: ''
+                      type: reference
+                      value: readFile.results.error
+                  - - exists
+                    - name: ''
+                      type: reference
+                      value: deserializeXml.results.error
+        name: Branch on Parsing Result
+  - description: ''
+    endpointSecurityType: customer_optional
+    isSynchronous: false
+    name: On Deploy - Create Archive and Errors Directories
+    steps:
+      - action:
+          key: webhook
+          component:
+            isPublic: true
+            key: webhook-triggers
+            version: LATEST
+        description: ''
+        inputs:
+          body:
+            type: value
+            value: ''
+          contentType:
+            type: value
+            value: ''
+          headers:
+            type: complex
+            value: []
+          statusCode:
+            type: value
+            value: ''
+        isTrigger: true
+        name: On Instance Deploy Trigger
+      - action:
+          key: branchOnExpression
+          component:
+            isPublic: true
+            key: branch
+            version: LATEST
+        branches:
+          - name: Should Archive?
+            steps:
+              - action:
+                  key: createDirectory
+                  component:
+                    isPublic: true
+                    key: sftp
+                    version: LATEST
+                description: ''
+                inputs:
+                  connection:
+                    type: configVar
+                    value: SFTP Connection
+                  debug:
+                    type: value
+                    value: 'false'
+                  path:
+                    type: template
+                    value: '{{#Import Directory Path}}/../archive'
+                  recursive:
+                    type: value
+                    value: 'true'
+                name: Create Archive Directory
+          - name: Else
+            steps: []
+        description: ''
+        inputs:
+          conditions:
+            type: complex
+            value:
+              - name: Should Archive?
+                type: complex
+                value:
+                  - and
+                  - - isTrue
+                    - name: ''
+                      type: configVar
+                      value: Archive Imported Files
+        name: Should Create Archive Folder?
+      - action:
+          key: createDirectory
+          component:
+            isPublic: true
+            key: sftp
+            version: LATEST
+        description: ''
+        inputs:
+          connection:
+            type: configVar
+            value: SFTP Connection
+          debug:
+            type: value
+            value: 'false'
+          path:
+            type: template
+            value: '{{#Import Directory Path}}/../errors'
+          recursive:
+            type: value
+            value: 'true'
+        name: Create Errors Directory
+labels:
+  - garret - in progress
+name: SFTP - File Import
+requiredConfigVars:
+  - connection:
+      key: basic
+      component:
+        isPublic: true
+        key: sftp
+        version: LATEST
+    dataType: connection
+    inputs:
+      host:
+        meta:
+          orgOnly: false
+          visibleToCustomerDeployer: true
+          visibleToOrgDeployer: true
+        type: value
+        value: demo-endpoint.prismatic-dev.io
+      password:
+        meta:
+          orgOnly: false
+          visibleToCustomerDeployer: true
+          visibleToOrgDeployer: true
+        type: value
+        value: Asdfasdf1
+      port:
+        meta:
+          orgOnly: false
+          visibleToCustomerDeployer: true
+          visibleToOrgDeployer: true
+        type: value
+        value: '2222'
+      timeout:
+        meta:
+          orgOnly: false
+          visibleToCustomerDeployer: true
+          visibleToOrgDeployer: true
+        type: value
+        value: '3000'
+      username:
+        meta:
+          orgOnly: false
+          visibleToCustomerDeployer: true
+          visibleToOrgDeployer: true
+        type: value
+        value: prismaticdemo
+    key: SFTP Connection
+    onPremiseConnectionConfig: disallowed
+    orgOnly: false
+  - dataType: string
+    defaultValue: /import
+    description: The path to import files from
+    key: Import Directory Path
+    orgOnly: false
+  - dataSource:
+      key: genericJsonForm
+      component:
+        isPublic: true
+        key: jsonforms
+        version: LATEST
+    dataType: jsonForm
+    defaultValue: ''
+    inputs:
+      data:
+        meta:
+          visibleToCustomerDeployer: false
+          visibleToOrgDeployer: false
+        type: value
+        value: |-
+          {
+            "mapping": [
+              {
+                "destination": "transNum",
+                "type": "Text"
+              },
+              {
+                "destination": "transid",
+                "type": "Text"
+              },
+              {
+                "destination": "created",
+                "type": "Date"
+              },
+              {
+                "destination": "amount",
+                "type": "Number"
+              },
+              {
+                "destination": "account",
+                "type": "Text"
+              }
+            ]
+          }
+      schema:
+        meta:
+          visibleToCustomerDeployer: false
+          visibleToOrgDeployer: false
+        type: value
+        value: |-
+          {
+            "properties": {
+              "mapping": {
+                "type": "array",
+                "title": "File Mapping",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "source": {
+                      "type": "string",
+                      "title": "Record Column Number"
+                    },
+                    "destination": {
+                      "type": "string",
+                      "title": "Destination Field",
+                      "oneOf": [
+                        {
+                          "const": "transNum",
+                          "title": "Transaction Number"
+                        },
+                        {
+                          "const": "transid",
+                          "title": "Transaction ID"
+                        },
+                        {
+                          "const": "created",
+                          "title": "Created Date"
+                        },
+                        {
+                          "const": "amount",
+                          "title": "Amount"
+                        },
+                        {
+                          "const": "account",
+                          "title": "Account"
+                        }
+                      ]
+                    },
+                    "type": {
+                      "type": "string",
+                      "title": "Field Type",
+                      "enum": [
+                        "Date",
+                        "Boolean",
+                        "Text",
+                        "Number"
+                      ]
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "title": "Required"
+                    }
+                  }
+                }
+              }
+            }
+          }
+      uiSchema:
+        meta:
+          visibleToCustomerDeployer: false
+          visibleToOrgDeployer: false
+        type: value
+        value: |-
+          {
+            "type": "Control",
+            "scope": "#/properties/mapping",
+            "options": {
+              "layout": "Accordion",
+              "elementLabelProp": "destination",
+              "detail": {
+                "type": "VerticalLayout",
+                "elements": [
+                  {
+                    "type": "Control",
+                    "scope": "#/properties/source"
+                  },
+                  {
+                    "type": "Control",
+                    "scope": "#/properties/destination"
+                  },
+                  {
+                    "type": "Control",
+                    "scope": "#/properties/type"
+                  },
+                  {
+                    "type": "Control",
+                    "scope": "#/properties/required",
+                    "options": {
+                      "toggle": true
+                    }
+                  }
+                ]
+              }
+            }
+          }
+    key: SFTP Field Mapping
+    orgOnly: false
+  - dataType: picklist
+    defaultValue: csv
+    description: Select the file type to import
+    key: File Import Type
+    orgOnly: false
+    pickList:
+      - csv
+      - json
+      - xlsx
+      - xml
+  - dataType: boolean
+    defaultValue: 'true'
+    description: 'If true, imported files will be archived to an "Archived" directory'
+    key: Archive Imported Files
+    orgOnly: false
+  - dataType: schedule
+    defaultValue: 00 00 */1 * *
+    description: The frequency that the SFTP share will be checked for new files to import
+    key: Import Frequency
+    orgOnly: false
+    scheduleType: day

@@ -34,8 +34,8 @@ jobs:
       - name: Prismatic Integration Publisher
         uses: prismatic-io/integration-publisher@v1.2
         with:
-          PATH_TO_YML: integrations/ServiceTitan.yml
+          PATH_TO_YML: integrations/SFTP-Import.yml
           PRISMATIC_URL: ${{ vars.PRISMATIC_URL }}
           PRISM_REFRESH_TOKEN: ${{ secrets.PRISM_REFRESH_TOKEN }}
-          INTEGRATION_ID: SW50ZWdyYXRpb246NGRiNzMyMDEtYzVhMi00NThkLWFlYjAtYmVlODk3OWE1YjZj
+          INTEGRATION_ID: SW50ZWdyYXRpb246MWJkNGYzZTUtZTNjYy00ZjE2LWI5NTQtZjQ1MTkzZDBkYThk
           MAKE_AVAILABLE_IN_MARKETPLACE: true

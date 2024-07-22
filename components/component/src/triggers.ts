@@ -1,9 +1,9 @@
 import { trigger } from "@prismatic-io/spectral";
 
-export const permitFlowTrigger = trigger({
+export const endpointTrigger = trigger({
   display: {
-    label: "PermitFlow Trigger",
-    description: "A webhook trigger for receiving events from PermitFlow",
+    label: "Endpoint Trigger",
+    description: "A webhook trigger for receiving events from Endpoint",
   },
   perform: async (context, payload, params) => {
     return Promise.resolve({
@@ -15,4 +15,4 @@ export const permitFlowTrigger = trigger({
   scheduleSupport: "valid",
 });
 
-export default { permitFlowTrigger };
+export default { endpointTrigger };

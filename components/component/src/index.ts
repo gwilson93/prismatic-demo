@@ -8,8 +8,8 @@ export default component({
   key: "demoComponent",
   public: false,
   display: {
-    label: "PermitFlow",
-    description: "Interact with the PermitFlow API",
+    label: "Endpoint",
+    description: "Interact with the Endpoint API",
     iconPath: "icon.png",
   },
   actions,
