@@ -1,49 +1,36 @@
 import { action, input } from "@prismatic-io/spectral";
 
 
-  export const createProject = action({
+  export const createPatient = action({
   display: {
-    label: "Create Project",
-    description: "Make a request to the Create Project API endpoint",
+    label: "Create Patient",
+    description: "Make a request to the Create Patient API endpoint",
   },
   perform: async (context) => {
     return {
       data: {},
     };
   },
-  inputs: {"connection":{"type":"connection","required":false,"label":"Connection"},"customerId":{"label":"Customer id","type":"string","required":false},"locationId":{"label":" location id","type":"string","required":false},"priority":{"label":" priority","type":"string","required":false},"summary":{"label":" summary","type":"string","required":false},"tagTypeId":{"label":" tag type id","type":"string","required":false},"status":{"label":" status","type":"string","required":false}}
+  inputs: {"connection":{"type":"connection","required":false,"label":"Connection"},"firstName":{"label":"Firstname","type":"string","required":false},"lastName":{"label":"Lastname","type":"string","required":false},"phone":{"label":"Phone","type":"string","required":false},"address":{"label":"Address","type":"string","required":false}}
 });
 
-  export const updateProject = action({
+  export const updatePatient = action({
   display: {
-    label: "Update Project",
-    description: "Make a request to the Update Project API endpoint",
+    label: "Update Patient",
+    description: "Make a request to the Update Patient API endpoint",
   },
   perform: async (context) => {
     return {
       data: {},
     };
   },
-  inputs: {"connection":{"type":"connection","required":false,"label":"Connection"},"pk":{"label":"Id","key":"id","type":"string","required":true},"customerId":{"label":"Customer id","type":"string","required":false},"locationId":{"label":" location id","type":"string","required":false},"priority":{"label":" priority","type":"string","required":false},"summary":{"label":" summary","type":"string","required":false},"tagTypeId":{"label":" tag type id","type":"string","required":false},"status":{"label":" status","type":"string","required":false}}
+  inputs: {"connection":{"type":"connection","required":false,"label":"Connection"},"pk":{"label":"Id","key":"id","type":"string","required":true},"firstName":{"label":"Firstname","type":"string","required":false},"lastName":{"label":"Lastname","type":"string","required":false},"phone":{"label":"Phone","type":"string","required":false},"address":{"label":"Address","type":"string","required":false}}
 });
 
-  export const deleteProject = action({
+  export const deletePatient = action({
   display: {
-    label: "Delete Project",
-    description: "Make a request to the Delete Project API endpoint",
-  },
-  perform: async (context) => {
-    return {
-      data: {},
-    };
-  },
-  inputs: {"connection":{"type":"connection","required":false,"label":"Connection"},"pk":{"label":"Id","key":"id","type":"string","required":true}}
-});
-
-  export const getProject = action({
-  display: {
-    label: "Get Project",
-    description: "Make a request to the Get Project API endpoint",
+    label: "Delete Patient",
+    description: "Make a request to the Delete Patient API endpoint",
   },
   perform: async (context) => {
     return {
@@ -53,10 +40,23 @@ import { action, input } from "@prismatic-io/spectral";
   inputs: {"connection":{"type":"connection","required":false,"label":"Connection"},"pk":{"label":"Id","key":"id","type":"string","required":true}}
 });
 
-  export const listProject = action({
+  export const getPatient = action({
   display: {
-    label: "List Project",
-    description: "Make a request to the List Project API endpoint",
+    label: "Get Patient",
+    description: "Make a request to the Get Patient API endpoint",
+  },
+  perform: async (context) => {
+    return {
+      data: {},
+    };
+  },
+  inputs: {"connection":{"type":"connection","required":false,"label":"Connection"},"pk":{"label":"Id","key":"id","type":"string","required":true}}
+});
+
+  export const listPatient = action({
+  display: {
+    label: "List Patient",
+    description: "Make a request to the List Patient API endpoint",
   },
   perform: async (context) => {
     return {
@@ -66,10 +66,10 @@ import { action, input } from "@prismatic-io/spectral";
   inputs: {"connection":{"type":"connection","required":false,"label":"Connection"}}
 });
 
-  export const searchProject = action({
+  export const searchPatient = action({
   display: {
-    label: "Search Project",
-    description: "Make a request to the Search Project API endpoint",
+    label: "Search Patient",
+    description: "Make a request to the Search Patient API endpoint",
   },
   perform: async (context) => {
     return {
