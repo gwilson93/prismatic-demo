@@ -31,7 +31,7 @@ configPages:
     userLevelConfigured: false
 defaultInstanceProfile: Default Instance Profile
 definitionVersion: 7
-description: 'Import CSV, Excel, or JSON files to Acme Inc'
+description: 'Import CSV, Excel, or JSON files to Endpoint Clinical'
 documentation: ''
 endpointType: flow_specific
 flows:
@@ -485,108 +485,99 @@ flows:
                           };
                     name: Map SFTP Fields to Destination
                   - action:
-                      key: actions
+                      key: createPatient
                       component:
-                        isPublic: true
-                        key: result-placeholder
-                        version: LATEST
-                    description: Replace with file handling logic
-                    inputs:
-                      code:
-                        type: value
-                        value: '{}'
-                    name: Mock Result
-                  - action:
-                      key: stopExecution
-                      component:
-                        isPublic: true
-                        key: stop-execution
+                        isPublic: false
+                        key: demoComponent
                         version: LATEST
                     description: ''
                     inputs:
-                      contentType:
-                        type: value
-                        value: application/json
-                      headers:
-                        type: complex
-                        value: []
-                      jsonBody:
+                      address:
                         type: value
                         value: ''
-                      statusCode:
+                      connection:
+                        type: configVar
+                        value: ''
+                      firstName:
                         type: value
-                        value: '200'
-                    name: Stop Execution 2
-                  - action:
-                      key: branchOnExpression
-                      component:
-                        isPublic: true
-                        key: branch
-                        version: LATEST
-                    branches:
+                        value: ''
+                      lastName:
+                        type: value
+                        value: ''
+                      phone:
+                        type: value
+                        value: ''
+                    name: Create Patient
+              - action:
+                  key: branchOnExpression
+                  component:
+                    isPublic: true
+                    key: branch
+                    version: LATEST
+                branches:
+                  - name: Archive File?
+                    steps:
+                      - action:
+                          key: moveFile
+                          component:
+                            isPublic: true
+                            key: sftp
+                            version: LATEST
+                        description: ''
+                        inputs:
+                          connection:
+                            type: configVar
+                            value: SFTP Connection
+                          debug:
+                            type: value
+                            value: 'false'
+                          destinationPath:
+                            type: template
+                            value: >-
+                              {{#Import Directory
+                              Path}}/../archive/{{$parseAndImportFileTrigger.results.body.data.filename}}
+                          sourcePath:
+                            type: template
+                            value: >-
+                              {{#Import Directory
+                              Path}}/{{$parseAndImportFileTrigger.results.body.data.filename}}
+                        name: Move File to Archive Folder
+                  - name: Else
+                    steps:
+                      - action:
+                          key: deleteFile
+                          component:
+                            isPublic: true
+                            key: sftp
+                            version: LATEST
+                        description: ''
+                        inputs:
+                          connection:
+                            type: configVar
+                            value: SFTP Connection
+                          debug:
+                            type: value
+                            value: 'false'
+                          path:
+                            type: template
+                            value: >-
+                              {{#Import Directory
+                              Path}}/{{$parseAndImportFileTrigger.results.body.data.filename}}
+                        name: Delete File
+                description: ''
+                inputs:
+                  conditions:
+                    type: complex
+                    value:
                       - name: Archive File?
-                        steps:
-                          - action:
-                              key: moveFile
-                              component:
-                                isPublic: true
-                                key: sftp
-                                version: LATEST
-                            description: ''
-                            inputs:
-                              connection:
-                                type: configVar
-                                value: SFTP Connection
-                              debug:
-                                type: value
-                                value: 'false'
-                              destinationPath:
-                                type: template
-                                value: >-
-                                  {{#Import Directory
-                                  Path}}/../archive/{{$parseAndImportFileTrigger.results.body.data.filename}}
-                              sourcePath:
-                                type: template
-                                value: >-
-                                  {{#Import Directory
-                                  Path}}/{{$parseAndImportFileTrigger.results.body.data.filename}}
-                            name: Move File to Archive Folder
-                      - name: Else
-                        steps:
-                          - action:
-                              key: deleteFile
-                              component:
-                                isPublic: true
-                                key: sftp
-                                version: LATEST
-                            description: ''
-                            inputs:
-                              connection:
-                                type: configVar
-                                value: SFTP Connection
-                              debug:
-                                type: value
-                                value: 'false'
-                              path:
-                                type: template
-                                value: >-
-                                  {{#Import Directory
-                                  Path}}/{{$parseAndImportFileTrigger.results.body.data.filename}}
-                            name: Delete File
-                    description: ''
-                    inputs:
-                      conditions:
                         type: complex
                         value:
-                          - name: Archive File?
-                            type: complex
-                            value:
-                              - and
-                              - - isTrue
-                                - name: ''
-                                  type: configVar
-                                  value: Archive Imported Files
-                    name: Should Archive File?
+                          - and
+                          - - isTrue
+                            - name: ''
+                              type: configVar
+                              value: Archive Imported Files
+                name: Should Archive File?
         description: ''
         inputs:
           conditions:
@@ -710,8 +701,6 @@ flows:
             type: value
             value: 'true'
         name: Create Errors Directory
-labels:
-  - garret - in progress
 name: SFTP - File Import
 requiredConfigVars:
   - connection:
@@ -783,23 +772,25 @@ requiredConfigVars:
           {
             "mapping": [
               {
-                "destination": "transNum",
+                "destination": "name",
+                "type": "Text",
+                "required": true
+              },
+              {
+                "destination": "email",
+                "type": "Text"
+                "required": true
+              },
+              {
+                "destination": "address",
                 "type": "Text"
               },
               {
-                "destination": "transid",
-                "type": "Text"
-              },
-              {
-                "destination": "created",
-                "type": "Date"
-              },
-              {
-                "destination": "amount",
+                "destination": "number",
                 "type": "Number"
               },
               {
-                "destination": "account",
+                "destination": "status",
                 "type": "Text"
               }
             ]
@@ -824,27 +815,27 @@ requiredConfigVars:
                     },
                     "destination": {
                       "type": "string",
-                      "title": "Destination Field",
+                      "title": "Endpoint Clinical Field",
                       "oneOf": [
                         {
-                          "const": "transNum",
-                          "title": "Transaction Number"
+                          "const": "name",
+                          "title": "Patient Name"
                         },
                         {
-                          "const": "transid",
-                          "title": "Transaction ID"
+                          "const": "email",
+                          "title": "Patient Email"
                         },
                         {
-                          "const": "created",
-                          "title": "Created Date"
+                          "const": "address",
+                          "title": "Patient Address"
                         },
                         {
-                          "const": "amount",
-                          "title": "Amount"
+                          "const": "number",
+                          "title": "Patient Phone Number"
                         },
                         {
-                          "const": "account",
-                          "title": "Account"
+                          "const": "status",
+                          "title": "Patient Status"
                         }
                       ]
                     },
@@ -858,7 +849,7 @@ requiredConfigVars:
                         "Number"
                       ]
                     },
-                    "required": {
+                   "required": {
                       "type": "boolean",
                       "title": "Required"
                     }
